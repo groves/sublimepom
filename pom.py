@@ -46,6 +46,8 @@ def requiretext(parent, childname):
 
 Parent = collections.namedtuple("Parent", ["groupId", "artifactId", "version", "relativePath"])
 
+Parent.tocoord = lambda x: Coordinate(x.groupId, x.artifactId, x.version, "pom")
+
 Coordinate = collections.namedtuple("Coordinate", ["groupId", "artifactId", "version", "packaging"])
 
 
@@ -83,7 +85,7 @@ class Pom(object):
             self._version = gettext(root, "version", self._parent.version)
             self._groupId = gettext(root, "groupId", self._parent.groupId)
         else:
-            self.parent = None
+            self._parent = None
             self._version = requiretext(root, "version")
             self._groupId = requiretext(root, "groupId")
 
@@ -113,6 +115,10 @@ class Pom(object):
 
         # Add dependencies breadth-first
         totraverse = [self]
+        if self._parent:
+            # TODO Use relativePath here?
+            totraverse.append(repo[self._parent.tocoord()])
+
         self.dependencies = ordereddict.OrderedDict()
         while totraverse:
             print "Traversing", totraverse[0].coordinate, totraverse[0]._dependencies
