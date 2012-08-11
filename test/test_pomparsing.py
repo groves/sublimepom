@@ -18,30 +18,23 @@ def testsimplepom():
 
 
 def testchildpom():
-    p = checkgoodpom('test/goodpoms/child.xml', artifact="my-subproject")
-    eq_(len(p._dependencies), 2)
-    otherproj = p._dependencies[0]
-    eq_("org.codehaus.mojo", otherproj._group)
-    eq_("1.0", otherproj._version)
-    eq_("my-otherproject", otherproj._artifact)
-    eq_("compile", otherproj._scope)
-    eq_("jar", otherproj._packaging)
-    eq_("false", otherproj._optional)
+    p = checkgoodpom('test/goodpoms/child.xml', artifact="child")
+    eq_(len(p._dependencies), 1)
 
-    otherprojswf = p._dependencies[1]
-    eq_("org.codehaus.mojo", otherprojswf._group)
-    eq_("1.0", otherprojswf._version)
-    eq_("my-otherproject", otherprojswf._artifact)
-    eq_("test", otherprojswf._scope)
-    eq_("swf", otherprojswf._packaging)
-    eq_("true", otherprojswf._optional)
+    setfields = p._dependencies[0]
+    eq_("org.codehaus.mojo", setfields._group)
+    eq_("1.0", setfields._version)
+    eq_("setfields", setfields._artifact)
+    eq_("test", setfields._scope)
+    eq_("swc", setfields._packaging)
+    eq_("true", setfields._optional)
 
 
 def testsetfields():
-    checkgoodpom('test/goodpoms/setfields.xml', packaging="swc")
+    checkgoodpom('test/goodpoms/setfields.xml', artifact="setfields", packaging="swc")
 
 
-def checkgoodpom(path, group="org.codehaus.mojo", artifact="my-project", version="1.0", packaging="jar"):
+def checkgoodpom(path, group="org.codehaus.mojo", artifact="simplest", version="1.0", packaging="jar"):
     p = pom.parse(path)
     eq_(group, p._group)
     eq_(artifact, p._artifact)

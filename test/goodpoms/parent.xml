@@ -5,6 +5,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.codehaus.mojo</groupId>
-  <artifactId>simplest</artifactId>
+  <artifactId>parent</artifactId>
   <version>1.0</version>
+  <packaging>pom</packaging>
+
+  <dependency>
+    <artifactId>simplest</artifactId>
+    <version>1.0</version>
+    <groupId>org.codehaus.mojo</groupId>
+  </dependency>
 </project>

@@ -11,7 +11,8 @@ def parse(file):
     tree = ElementTree.parse(file)
     return Pom(tree)
 
-q = lambda name: "{http://maven.apache.org/POM/4.0.0}%s" % name
+pom_ns = "{http://maven.apache.org/POM/4.0.0}"
+q = lambda name: pom_ns + name
 
 
 def find(el, name):
@@ -32,7 +33,7 @@ def requirechild(parent, childname):
     child = find(parent, childname)
     if child is not None:
         return child
-    raise MalformedPomException("%s must contain a %s element" % (parent.tag, childname))
+    raise MalformedPomException("%s must contain a %s element" % (parent.tag.replace(pom_ns, ""), childname))
 
 
 def requiretext(parent, childname):
@@ -42,7 +43,7 @@ def requiretext(parent, childname):
         return text
     raise MalformedPomException("%s.%s must contain text" % (parent.tag, childname))
 
-GAV = collections.namedtuple("GroupArtifactVersion", ["group", "artifact", "version"])
+Parent = collections.namedtuple("Parent", ["group", "artifact", "version", "relativePath"])
 
 
 class Dependency(object):
@@ -54,7 +55,7 @@ class Dependency(object):
         self._scope = gettext(root, "scope", "compile")
         self._optional = gettext(root, "optional", "false")
 
-        # Exclusions?
+        # Exclusions
 
 
 class Pom(object):
@@ -65,7 +66,11 @@ class Pom(object):
 
         parent = find(root, "parent")
         if parent is not None:
-            self.parent = GAV(requiretext(parent, "groupId"), requiretext(parent, "artifactId"), requiretext(parent, "version"))
+            parentGroup = requiretext(parent, "groupId")
+            parentArtifact = requiretext(parent, "artifactId")
+            parentVersion = requiretext(parent, "version")
+            parentRelativePath = gettext(parent, "relativePath", "../pom.xml")
+            self.parent = Parent(parentGroup, parentArtifact, parentVersion, parentRelativePath)
             self._version = gettext(root, "version", self.parent.version)
             self._group = gettext(root, "groupId", self.parent.group)
         else:
@@ -83,6 +88,6 @@ class Pom(object):
         # properties
         # classifier?
 
-        # Interpolation!
+        # Interpolation! Get builtin properties in addition to inherited ones
 
         # settings.xml?
