@@ -18,7 +18,7 @@
       <artifactId>setfields</artifactId>
       <version>1.0</version>
       <groupId>org.codehaus.mojo</groupId>
-      <packaging>swc</packaging>
+      <type>swc</type>
       <optional>true</optional>
       <scope>test</scope>
     </dependency>
