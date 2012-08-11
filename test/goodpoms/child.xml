@@ -1,0 +1,29 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                      http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>my-project</artifactId>
+      <version>1.0</version>
+      <relativePath>simplest.xml</relativePath>
+  </parent>
+  <artifactId>my-subproject</artifactId>
+  <dependencies>
+    <dependency>
+        <artifactId>my-otherproject</artifactId>
+        <version>1.0</version>
+        <groupId>org.codehaus.mojo</groupId>
+    </dependency>
+    <dependency>
+        <artifactId>my-otherproject</artifactId>
+        <version>1.0</version>
+        <groupId>org.codehaus.mojo</groupId>
+        <packaging>swf</packaging>
+        <optional>true</optional>
+        <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
