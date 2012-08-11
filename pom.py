@@ -43,13 +43,13 @@ def requiretext(parent, childname):
         return text
     raise MalformedPomException("%s.%s must contain text" % (parent.tag, childname))
 
-Parent = collections.namedtuple("Parent", ["group", "artifact", "version", "relativePath"])
+Parent = collections.namedtuple("Parent", ["groupId", "artifactId", "version", "relativePath"])
 
 
 class Dependency(object):
     def __init__(self, root):
-        self._artifact = requiretext(root, "artifactId")
-        self._group = requiretext(root, "groupId")
+        self._artifactId = requiretext(root, "artifactId")
+        self._groupId = requiretext(root, "groupId")
         self._version = gettext(root, "version")  # fill in from dependencyManagement if null
         self._packaging = gettext(root, "packaging", "jar")
         self._scope = gettext(root, "scope", "compile")
@@ -62,21 +62,21 @@ class Pom(object):
     def __init__(self, tree):
         root = tree.getroot()
 
-        self._artifact = requiretext(root, "artifactId")
+        self._artifactId = requiretext(root, "artifactId")
 
         parent = find(root, "parent")
         if parent is not None:
-            parentGroup = requiretext(parent, "groupId")
-            parentArtifact = requiretext(parent, "artifactId")
+            parentGroupId = requiretext(parent, "groupId")
+            parentArtifactId = requiretext(parent, "artifactId")
             parentVersion = requiretext(parent, "version")
             parentRelativePath = gettext(parent, "relativePath", "../pom.xml")
-            self.parent = Parent(parentGroup, parentArtifact, parentVersion, parentRelativePath)
+            self.parent = Parent(parentGroupId, parentArtifactId, parentVersion, parentRelativePath)
             self._version = gettext(root, "version", self.parent.version)
-            self._group = gettext(root, "groupId", self.parent.group)
+            self._groupId = gettext(root, "groupId", self.parent.groupId)
         else:
             self.parent = None
             self._version = requiretext(root, "version")
-            self._group = requiretext(root, "groupId")
+            self._groupId = requiretext(root, "groupId")
 
         self._packaging = gettext(root, "packaging", "jar")
 

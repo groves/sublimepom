@@ -22,9 +22,9 @@ def testchildpom():
     eq_(len(p._dependencies), 1)
 
     setfields = p._dependencies[0]
-    eq_("org.codehaus.mojo", setfields._group)
+    eq_("org.codehaus.mojo", setfields._groupId)
     eq_("1.0", setfields._version)
-    eq_("setfields", setfields._artifact)
+    eq_("setfields", setfields._artifactId)
     eq_("test", setfields._scope)
     eq_("swc", setfields._packaging)
     eq_("true", setfields._optional)
@@ -36,8 +36,8 @@ def testsetfields():
 
 def checkgoodpom(path, group="org.codehaus.mojo", artifact="simplest", version="1.0", packaging="jar"):
     p = pom.parse(path)
-    eq_(group, p._group)
-    eq_(artifact, p._artifact)
+    eq_(group, p._groupId)
+    eq_(artifact, p._artifactId)
     eq_(version, p._version)
     eq_(packaging, p._packaging)
     return p
