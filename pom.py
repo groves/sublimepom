@@ -85,6 +85,7 @@ UNSUPPORTED_PROPERTY_PREFIXES = set(["env", "java", "os", "file", "path", "line"
 
 class Pom(object):
     def __init__(self, tree):
+        # TODO handle lack of maven namespace?
         root = tree.getroot()
 
         self._artifactId = requiretext(root, "artifactId")
@@ -168,6 +169,8 @@ class Pom(object):
 
 
 def smellslikepom(fn):
+    if not fn.endswith('.xml'):
+        return False
     f = open(fn)
     read = f.read(512)
     f.close()
@@ -178,7 +181,7 @@ DEFAULT_DIR_IGNORES = set(["target", ".git", ".svn", "badpoms"])
 
 def findpoms(path, followlinks=True, ignoreddirs=DEFAULT_DIR_IGNORES):
         for d, dns, fns in os.walk(path, followlinks=followlinks):
-            for fn in (fn for fn in fns if fn.endswith('.xml') and smellslikepom(d + "/" + fn)):
+            for fn in (fn for fn in fns if fn == 'pom.xml' or smellslikepom(d + "/" + fn)):
                 yield d + "/" + fn
             dns[:] = (d for d in dns if d not in ignoreddirs)
 
