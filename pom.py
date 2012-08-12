@@ -152,7 +152,7 @@ def smellslikepom(fn):
     f.close()
     return '<project' in read and 'xsi:schemaLocation="http://maven.apache.org/POM/4.0.0' in read
 
-DEFAULT_DIR_IGNORES = set(["target", ".git", ".svn"])
+DEFAULT_DIR_IGNORES = set(["target", ".git", ".svn", "badpoms"])
 
 
 def findpoms(path, followlinks=True, ignoreddirs=DEFAULT_DIR_IGNORES):
@@ -189,6 +189,7 @@ class Repository(object):
         pom = parse(path)
         self.poms_by_location[path] = pom
         self.poms_by_coordinate[pom.coordinate] = pom
+        print "Added", path
 
     def __getitem__(self, key):
         pom = self.poms_by_coordinate.get(key)
