@@ -150,7 +150,7 @@ def smellslikepom(fn):
     f = open(fn)
     read = f.read(512)
     f.close()
-    return '<project' in read
+    return '<project' in read and 'xsi:schemaLocation="http://maven.apache.org/POM/4.0.0' in read
 
 DEFAULT_DIR_IGNORES = set(["target", ".git", ".svn"])
 
