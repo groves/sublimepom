@@ -6,12 +6,22 @@ from xml.etree import ElementTree
 
 class MalformedPomException(Exception):
     def __init__(self, reason):
-        Exception.__init__(self, reason)
+        self.reason = reason
+
+    def __str__(self):
+        if hasattr(self, 'fn'):
+            return "MalformedPomException: %s at %s" % (self.reason, self.fn)
+        else:
+            return "MalformedPomException: %s" % self.reason
 
 
 def parse(file):
     tree = ElementTree.parse(file)
-    return Pom(tree)
+    try:
+        return Pom(tree)
+    except MalformedPomException as mpe:
+        mpe.fn = file
+        raise
 
 pom_ns = "{http://maven.apache.org/POM/4.0.0}"
 q = lambda name: pom_ns + name
