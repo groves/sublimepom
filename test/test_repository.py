@@ -2,15 +2,14 @@ import pom
 from nose.tools import eq_
 
 
-def createrepo(*artifactIds):
+def createrepo():
     repo = pom.Repository()
-    for artifactId in artifactIds:
-        repo.addpom("test/goodpoms/%s.xml" % artifactId)
+    repo.adddir("test/goodpoms")
     return repo
 
 
 def test_transitive():
-    repo = createrepo("simplest", "simplestuser", "transitivesimplestuser")
+    repo = createrepo()
     resolved = repo["test/goodpoms/transitivesimplestuser.xml"]
     eq_("transitivesimplestuser", resolved._artifactId)
     eq_(2, len(resolved.dependencies))
@@ -22,7 +21,7 @@ def test_transitive():
 
 
 def test_parentdependenciesincluded():
-    repo = createrepo("parent", "child", "setfields", "simplest")
+    repo = createrepo()
     resolved = repo["test/goodpoms/child.xml"]
     eq_("child", resolved._artifactId)
     eq_(2, len(resolved.dependencies))

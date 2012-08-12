@@ -1,5 +1,6 @@
 import collections
 import ordereddict
+import os
 from xml.etree import ElementTree
 
 
@@ -113,7 +114,7 @@ class Pom(object):
         #for dep in self._dependencies:
         #    dep.interpolate(self)
 
-        # Add dependencies breadth-first
+        # Add dependencies breadth-first to respect the closest-to-root version setting rule
         totraverse = [self]
         if self._parent:
             # TODO Use relativePath here?
@@ -135,11 +136,26 @@ class Pom(object):
                 # TODO - track scope, allowing overrides for less-restrictive scopes
 
 
+def smellslikepom(fn):
+    f = open(fn)
+    read = f.read(512)
+    f.close()
+    return '<project' in read
+
+DEFAULT_DIR_IGNORES = set(["target", ".git", ".svn"])
+
+
 class Repository(object):
     def __init__(self):
         self.poms_by_coordinate = {}
         self.poms_by_location = {}
         self.resolved = set()
+
+    def adddir(self, path, followlinks=True, ignoreddirs=DEFAULT_DIR_IGNORES):
+        for d, dns, fns in os.walk(path, followlinks=followlinks):
+            for fn in (fn for fn in fns if fn.endswith('.xml') and smellslikepom(d + "/" + fn)):
+                self.addpom(d + "/" + fn)
+            dns[:] = (d for d in dns if d not in ignoreddirs)
 
     def addpom(self, path):
         pom = parse(path)
