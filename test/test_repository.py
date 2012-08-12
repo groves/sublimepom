@@ -1,5 +1,5 @@
 import pom
-from nose.tools import eq_
+from nose.tools import eq_, ok_
 
 
 def createrepo():
@@ -30,3 +30,10 @@ def test_parentdependenciesincluded():
         resolved.dependencies.keys()[0])
     eq_(pom.Coordinate("org.codehaus.mojo", "simplest", "1.0", "jar"),
         resolved.dependencies.keys()[1])
+
+
+def test_removedir():
+    repo = createrepo()
+    ok_(len(repo.poms_by_location) > 0)
+    repo.removedir('test/goodpoms')
+    eq_({}, repo.poms_by_location)

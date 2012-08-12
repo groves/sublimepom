@@ -145,6 +145,13 @@ def smellslikepom(fn):
 DEFAULT_DIR_IGNORES = set(["target", ".git", ".svn"])
 
 
+def findpoms(path, followlinks=True, ignoreddirs=DEFAULT_DIR_IGNORES):
+        for d, dns, fns in os.walk(path, followlinks=followlinks):
+            for fn in (fn for fn in fns if fn.endswith('.xml') and smellslikepom(d + "/" + fn)):
+                yield d + "/" + fn
+            dns[:] = (d for d in dns if d not in ignoreddirs)
+
+
 class Repository(object):
     def __init__(self):
         self.poms_by_coordinate = {}
@@ -152,24 +159,33 @@ class Repository(object):
         self.resolved = set()
 
     def adddir(self, path, followlinks=True, ignoreddirs=DEFAULT_DIR_IGNORES):
-        for d, dns, fns in os.walk(path, followlinks=followlinks):
-            for fn in (fn for fn in fns if fn.endswith('.xml') and smellslikepom(d + "/" + fn)):
-                self.addpom(d + "/" + fn)
-            dns[:] = (d for d in dns if d not in ignoreddirs)
+        for fn in findpoms(path, followlinks, ignoreddirs):
+            self.addfile(fn)
 
-    def addpom(self, path):
-        pom = parse(path)
-        self.poms_by_location[path] = pom
-        self.poms_by_coordinate[pom.coordinate] = pom
+    def removedir(self, path):
+        path = os.path.abspath(path)
+        for pompath, pom in self.poms_by_location.items():
+            if pompath.startswith(path):
+                del self.poms_by_location[pompath]
+                del self.poms_by_coordinate[pom.coordinate]
+                self.resolved.discard(pom)
 
     def resolve(self, pom):
         pom.resolve(self)
         self.resolved.add(pom)
 
+    def addfile(self, path):
+        path = os.path.abspath(path)
+        pom = parse(path)
+        self.poms_by_location[path] = pom
+        self.poms_by_coordinate[pom.coordinate] = pom
+
     def __getitem__(self, key):
-        pom = self.poms_by_location.get(key)
+        pom = self.poms_by_coordinate.get(key)
         if not pom:
-            pom = self.poms_by_coordinate.get(key)
+            if isinstance(key, str):
+                path = os.path.abspath(key)
+                pom = self.poms_by_location.get(path)
             if not pom:
                 raise KeyError("No pom for %s" % (key,))
         if pom not in self.resolved:
