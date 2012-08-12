@@ -4,15 +4,26 @@
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <groupId>org.codehaus.mojo</groupId>
+    <artifactId>grandparent</artifactId>
+    <version>1.0</version>
+    <relativePath>grandparent.xml</relativePath>
+  </parent>
+
   <groupId>org.codehaus.mojo</groupId>
   <artifactId>parent</artifactId>
   <version>1.0</version>
   <packaging>pom</packaging>
 
+  <properties>
+    <child.setfields.artifactId>wrongid</child.setfields.artifactId>
+  </properties>
+
   <dependencies>
     <dependency>
       <artifactId>simplest</artifactId>
-      <version>1.0</version>
+      <version>${codehaus.mojo.version}</version>
       <groupId>org.codehaus.mojo</groupId>
     </dependency>
   </dependencies>

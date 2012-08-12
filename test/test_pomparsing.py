@@ -22,9 +22,9 @@ def testchildpom():
     eq_(len(p._dependencies), 1)
 
     setfields = p._dependencies[0]
-    eq_("org.codehaus.mojo", setfields._groupId)
-    eq_("1.0", setfields._version)
-    eq_("setfields", setfields._artifactId)
+    eq_("${project.groupId}", setfields._groupId)
+    eq_("${codehaus.mojo.version}", setfields._version)
+    eq_("${child.setfields.artifactId}", setfields._artifactId)
     eq_("test", setfields._scope)
     eq_("swc", setfields._packaging)
     eq_("true", setfields._optional)

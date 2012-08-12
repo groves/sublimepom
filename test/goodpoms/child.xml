@@ -12,12 +12,15 @@
   </parent>
 
   <artifactId>child</artifactId>
+  <properties>
+    <child.setfields.artifactId>setfields</child.setfields.artifactId>
+  </properties>
 
   <dependencies>
     <dependency>
-      <artifactId>setfields</artifactId>
-      <version>1.0</version>
-      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>${child.setfields.artifactId}</artifactId>
+      <version>${codehaus.mojo.version}</version>
+      <groupId>${project.groupId}</groupId>
       <type>swc</type>
       <optional>true</optional>
       <scope>test</scope>
