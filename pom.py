@@ -18,7 +18,7 @@ class MalformedPomException(Exception):
 def parse(file):
     tree = ElementTree.parse(file)
     try:
-        return Pom(tree)
+        return Pom(tree, file)
     except MalformedPomException as mpe:
         mpe.fn = file
         raise
@@ -84,7 +84,7 @@ class Dependency(object):
 UNSUPPORTED_PROPERTY_PREFIXES = set(["env", "java", "os", "file", "path", "line", "user"])
 
 class Pom(object):
-    def __init__(self, tree):
+    def __init__(self, tree, path=None):
         # TODO handle lack of maven namespace?
         root = tree.getroot()
 
@@ -123,6 +123,14 @@ class Pom(object):
         # classifier?
 
         # settings.xml properties
+
+        self.path = path
+        if self.path is not None:
+            self.dir = os.path.dirname(self.path)
+            # TODO parse build.sourceDirectory and http://mojo.codehaus.org/build-helper-maven-plugin/usage.html
+            # The entries in srcdirs and testsrcdirs may not exist. This just represents what's in the pom, not what's on the filesystem
+            self.srcdirs = [self.dir + '/src/main/java']
+            self.testsrcdirs = [self.dir + '/src/test/java']
 
     def resolve(self, repo):
         def interpolate(expression):
