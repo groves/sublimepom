@@ -180,10 +180,10 @@ DEFAULT_DIR_IGNORES = set(["target", ".git", ".svn", "badpoms"])
 
 
 def findpoms(path, followlinks=True, ignoreddirs=DEFAULT_DIR_IGNORES):
-        for d, dns, fns in os.walk(path, followlinks=followlinks):
-            for fn in (fn for fn in fns if fn == 'pom.xml' or smellslikepom(d + "/" + fn)):
-                yield d + "/" + fn
-            dns[:] = (d for d in dns if d not in ignoreddirs)
+    for d, dns, fns in os.walk(path, followlinks=followlinks):
+        for fn in (fn for fn in fns if fn == 'pom.xml' or smellslikepom(d + "/" + fn)):
+            yield d + "/" + fn
+        dns[:] = (d for d in dns if d not in ignoreddirs)
 
 
 class Repository(object):
