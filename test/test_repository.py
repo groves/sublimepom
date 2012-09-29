@@ -1,9 +1,9 @@
-import pom
+import maven
 from nose.tools import eq_, ok_
 
 
 def createrepo():
-    repo = pom.Repository()
+    repo = maven.Repository()
     repo.adddir("test/goodpoms")
     return repo
 
@@ -14,9 +14,9 @@ def test_transitive():
     eq_("transitivesimplestuser", resolved._artifactId)
     eq_(2, len(resolved.dependencies))
 
-    eq_(pom.Coordinate("org.codehaus.mojo", "simplestuser", "1.0", "jar"),
+    eq_(maven.Coordinate("org.codehaus.mojo", "simplestuser", "1.0", "jar"),
         resolved.dependencies.keys()[0])
-    eq_(pom.Coordinate("org.codehaus.mojo", "simplest", "1.0", "jar"),
+    eq_(maven.Coordinate("org.codehaus.mojo", "simplest", "1.0", "jar"),
         resolved.dependencies.keys()[1])
 
 
@@ -26,9 +26,9 @@ def test_parentdependenciesincluded():
     eq_("child", resolved._artifactId)
     eq_(2, len(resolved.dependencies))
 
-    eq_(pom.Coordinate("org.codehaus.mojo", "setfields", "1.0", "swc"),
+    eq_(maven.Coordinate("org.codehaus.mojo", "setfields", "1.0", "swc"),
         resolved.dependencies.keys()[0])
-    eq_(pom.Coordinate("org.codehaus.mojo", "simplest", "1.0", "jar"),
+    eq_(maven.Coordinate("org.codehaus.mojo", "simplest", "1.0", "jar"),
         resolved.dependencies.keys()[1])
 
 

@@ -1,6 +1,6 @@
 import collections
 import os
-import pom
+import maven
 import Queue
 import re
 import threading
@@ -14,7 +14,7 @@ ClassLoc = collections.namedtuple("ClassLoc", ["classname", "path"])
 
 class Lookup(object):
     def __init__(self):
-        self.repo = pom.Repository()
+        self.repo = maven.Repository()
         self.modlock = threading.RLock()
         self.actions = Queue.Queue()
         self.actor = threading.Thread(target=self._processactions, name="LookupActor")
@@ -43,11 +43,12 @@ class Lookup(object):
 
     def _addrootsaction(self, roots):
         print "Adding roots", [os.path.abspath(root) for root in roots]
+        # TODO only count as a newpom if it's not already present
         newpoms = []
         for root in roots:
-            for fn in pom.findpoms(os.path.abspath(root)):
+            for fn in maven.findpoms(os.path.abspath(root)):
                 print "Adding pom", fn
-                newpoms.append(pom.parse(fn))
+                newpoms.append(maven.parse(fn))
         # TODO add roots to watchdog
         for newpom in newpoms:
             newpom.srcclasses = [classloc for root in newpom.srcdirs for classloc in get_classes_in_root(root)]

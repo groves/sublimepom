@@ -1,5 +1,5 @@
 import os
-import pom
+import maven
 from nose.tools import eq_, raises
 
 
@@ -8,9 +8,9 @@ def testbadpoms():
         yield checkbadpom, 'test/badpoms/' + path
 
 
-@raises(pom.MalformedPomException)
+@raises(maven.MalformedPomException)
 def checkbadpom(path):
-    pom.parse(path)
+    maven.parse(path)
 
 
 def testsimplepom():
@@ -35,7 +35,7 @@ def testsetfields():
 
 
 def checkgoodpom(path, group="org.codehaus.mojo", artifact="simplest", version="1.0", packaging="jar"):
-    p = pom.parse(path)
+    p = maven.parse(path)
     eq_(group, p._groupId)
     eq_(artifact, p._artifactId)
     eq_(version, p._version)

@@ -3,9 +3,9 @@ import sublime_plugin
 import webbrowser
 
 import nav
-import pom
+import maven
 reload(nav)
-reload(pom)
+reload(maven)
 
 lookup = nav.Lookup()
 

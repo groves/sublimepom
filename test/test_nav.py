@@ -1,11 +1,11 @@
 import nav
 import os
-import pom
+import maven
 from nose.tools import eq_
 
 
 def test_standalonelib():
-    parsed = pom.parse('test/javaproject/live/base/pom.xml')
+    parsed = maven.parse('test/javaproject/live/base/pom.xml')
     classlocs = list(nav.get_classes(parsed, test=True))
     eq_(1, len(classlocs))
     eq_('jproj.base.Main', classlocs[0].classname)
