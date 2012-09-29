@@ -126,6 +126,7 @@ class Pom(object):
 
         self.path = path
         if self.path is not None:
+            self.path = os.path.abspath(self.path)
             self.dir = os.path.dirname(self.path)
             # TODO parse build.sourceDirectory and http://mojo.codehaus.org/build-helper-maven-plugin/usage.html
             # The entries in srcdirs and testsrcdirs may not exist. This just represents what's in the pom, not what's on the filesystem

@@ -1,3 +1,4 @@
+import collections
 import os
 import pom
 import Queue
@@ -9,6 +10,7 @@ packageline = re.compile("^\s*package ([\w.]+);\s*$")
 
 pathtofull = lambda path: '.'.join(path.split('/'))
 
+ClassLoc = collections.namedtuple("ClassLoc", ["classname", "path"])
 
 class Lookup(object):
     def __init__(self):
@@ -29,7 +31,8 @@ class Lookup(object):
 
     def getclassesforpath(self, path):
         with self.modlock:
-            return get_accessible_classes(self.repo, path)
+            pom = self.repo.find_pom_for_srcroot(path)
+            return (classloc for coord in [pom.coordinate] + pom.dependencies.keys() for classloc in self.repo[coord].srcclasses)
 
     def _processactions(self):
         while True:
@@ -44,9 +47,14 @@ class Lookup(object):
             for fn in pom.findpoms(os.path.abspath(root)):
                 print "Adding pom", fn
                 newpoms.append(pom.parse(fn))
+        # TODO add roots to watchdog
+        for newpom in newpoms:
+            newpom.srcclasses = [classloc for root in newpom.srcdirs for classloc in get_classes_in_root(root)]
+            newpom.testclasses = [classloc for root in newpom.testsrcdirs for classloc in get_classes_in_root(root)]
         with self.modlock:
             for newpom in newpoms:
                 self.repo.addpom(newpom.path, newpom)
+            self.repo.resolveall()
 
 
 def get_classes_in_root(root):
@@ -54,11 +62,12 @@ def get_classes_in_root(root):
     for d, dns, fns in os.walk(root):
         package = pathtofull(d[rootlen:]) + "."
         for fn in (fn for fn in fns if fn.endswith('.java')):
-            yield package + fn.split('.')[0]
+            yield ClassLoc(package + fn.split('.')[0], os.path.join(d, fn))
         dns[:] = (d for d in dns if d != '.svn')
 
 def get_classes(pom, test=False):
     if pom.path is not None:
+
         for dir in pom.srcdirs:
             for klass in get_classes_in_root(dir):
                 yield klass
