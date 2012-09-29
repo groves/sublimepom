@@ -161,18 +161,27 @@ class Pom(object):
         totraverse = [self]
         self.directdependencies = self._dependencies
         if self._parent:
-            # TODO Use relativePath here?
-            parent = repo[self._parent.tocoord()]
             self.directdependencies = list(self._dependencies)
-            self.directdependencies.extend(parent.directdependencies)
+            # TODO Use relativePath here?
+            try:
+                parent = repo[self._parent.tocoord()]
+                self.directdependencies.extend(parent.directdependencies)
+            except KeyError:
+                # TODO fetch?
+                pass
         self.dependencies = ordereddict.OrderedDict()
         while totraverse:
             self._resolve(totraverse.pop(0), repo, self.dependencies, totraverse)
 
     def _resolve(self, pom, repo, dependencies, totraverse):
         for dep in (d for d in pom.directdependencies if not d.coordinate in dependencies):
+            try:
+                deppom = repo[dep.coordinate]
+            except KeyError:
+                # TODO fetch?
+                continue
             dependencies[dep.coordinate] = dep
-            totraverse.append(repo[dep.coordinate])
+            totraverse.append(deppom)
             # TODO - exclusions, optional
             # TODO - track scope, allowing overrides for less-restrictive scopes
 

@@ -32,6 +32,7 @@ class Lookup(object):
     def getclassesforpath(self, path):
         with self.modlock:
             pom = self.repo.find_pom_for_srcroot(path)
+            print "Got", pom.coordinate, "for", path, "with", pom.dependencies.keys()
             return (classloc for coord in [pom.coordinate] + pom.dependencies.keys() for classloc in self.repo[coord].srcclasses)
 
     def _processactions(self):

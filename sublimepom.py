@@ -1,10 +1,13 @@
 import sublime
 import sublime_plugin
+import webbrowser
 
+import nav
 import pom
+reload(nav)
 reload(pom)
 
-repo = pom.Repository()
+lookup = nav.Lookup()
 
 # I'd like to add to the repo on changes to the folders in the window, but I don't think there's an event for that
 # This does it on save and tries to only do something when a folder is added or removed
@@ -16,8 +19,23 @@ class RepoMaintainer(sublime_plugin.EventListener):
             for folder in window.folders():
                 currentfolders.add(folder)
         global addedfolders
-        for dn in addedfolders - currentfolders:
-            repo.removedir(dn)
-        for dn in currentfolders - addedfolders:
-            repo.adddir(dn)
+        lookup.removeroots(addedfolders - currentfolders)
+        lookup.addroots(currentfolders - addedfolders)
         addedfolders = currentfolders
+
+class OpenJavaClass(sublime_plugin.TextCommand):
+    def run(self, edit):
+        fn = self.view.file_name()
+        if fn is None or not fn.endswith('.java'):
+            return
+        options = list(lookup.getclassesforpath(fn))
+
+        def x(result):
+            if result != -1:
+                fn = options[result][1]
+                if fn.endswith('.java'):
+                    self.view.window().open_file(fn)
+                else:
+                    webbrowser.open_new(fn)
+
+        self.view.window().show_quick_panel([t[0] for t in options], x)
