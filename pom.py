@@ -216,6 +216,10 @@ class Repository(object):
         pom.resolve(self)
         self.resolved.add(pom)
 
+    def resolveall(self):
+        for pom in (pom for pom in self.poms_by_location.itervalues() if pom not in self.resolved):
+            self.resolve(pom)
+
     def lookupProperty(self, pom, key):
         while pom:
             if key in pom._properties:
@@ -227,9 +231,20 @@ class Repository(object):
 
     def addfile(self, path):
         path = os.path.abspath(path)
-        pom = parse(path)
+        self.addpom(path, parse(path))
+
+    def addpom(self, path, pom):
         self.poms_by_location[path] = pom
         self.poms_by_coordinate[pom.coordinate] = pom
+
+    def find_pom_for_srcroot(self, srcroot):
+        srcroot = os.path.abspath(srcroot)
+        self.resolveall()
+        for pom in self.resolved:
+            for srcdir in pom.srcdirs:
+                if srcroot.startswith(srcdir):
+                    return pom
+        return None
 
     def __getitem__(self, key):
         pom = self.poms_by_coordinate.get(key)
