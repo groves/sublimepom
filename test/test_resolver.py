@@ -34,6 +34,6 @@ def test_parentdependenciesincluded():
 
 def test_removedir():
     reso = createreso()
-    ok_(len(reso.poms_by_location) > 0)
+    ok_(len(reso) > 0)
     reso.removedir('test/goodpoms')
-    eq_({}, reso.poms_by_location)
+    eq_(0, len(reso))

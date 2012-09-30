@@ -56,7 +56,7 @@ class Lookup(object):
         with self.modlock:
             for newpom in newpoms:
                 self.resolver.addpom(newpom.path, newpom)
-            self.resolver.resolveall()
+            self.resolver.resolve()
             # TODO log missing from poms
 
 

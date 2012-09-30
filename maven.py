@@ -151,7 +151,7 @@ class Pom(object):
                         print "Don't know how to interpolate %s" % expression
                         return expression
                 else:
-                    result = reso.lookup_property(self, name)
+                    result = reso._lookup_property(self, name)
                     if result is None:
                         break
                     expression = result
@@ -207,9 +207,9 @@ def findpoms(path, followlinks=True, ignoreddirs=DEFAULT_DIR_IGNORES):
 
 class Resolver(object):
     def __init__(self):
-        self.poms_by_coordinate = {}
-        self.poms_by_location = {}
-        self.resolved = set()
+        self._poms_by_coordinate = {}
+        self._poms_by_location = {}
+        self._resolved = set()
 
     def adddir(self, path, followlinks=True, ignoreddirs=DEFAULT_DIR_IGNORES):
         for fn in findpoms(path, followlinks, ignoreddirs):
@@ -217,33 +217,31 @@ class Resolver(object):
 
     def removedir(self, path):
         path = os.path.abspath(path)
-        for pompath, pom in self.poms_by_location.items():
+        for pompath, pom in self._poms_by_location.items():
             if pompath.startswith(path):
-                del self.poms_by_location[pompath]
-                del self.poms_by_coordinate[pom.coordinate]
-                self.resolved.discard(pom)
+                del self._poms_by_location[pompath]
+                del self._poms_by_coordinate[pom.coordinate]
+                self._resolved.discard(pom)
 
-    def resolve(self, pom):
+    def _resolve(self, pom):
         pom._resolve(self)
-        self.resolved.add(pom)
+        self._resolved.add(pom)
 
-    def resolveall(self):
-        for pom in (pom for pom in self.poms_by_location.itervalues() if pom not in self.resolved):
-            self.resolve(pom)
+    def resolve(self):
+        for pom in (pom for pom in self._poms_by_location.itervalues() if pom not in self._resolved):
+            self._resolve(pom)
 
-    def lookup_property(self, pom, key):
+    def _lookup_property(self, pom, key):
         while pom:
             if key in pom._properties:
                 return pom._properties[key]
             if pom._parent is None:
                 return None
-            parent = self.poms_by_coordinate.get(pom._parent.tocoord())
-            if parent is None:
-                pom.missing.add(pom._parent.tocoord)
+            try:
+                pom = self[pom._parent.tocoord()]
+            except KeyError:
+                pom.missing.add(pom._parent.tocoord())
                 return None
-            if parent not in self.resolved:
-                self.resolve(parent)
-            pom = parent
         return None
 
     def addfile(self, path):
@@ -251,26 +249,29 @@ class Resolver(object):
         self.addpom(path, parse(path))
 
     def addpom(self, path, pom):
-        self.poms_by_location[path] = pom
-        self.poms_by_coordinate[pom.coordinate] = pom
+        self._poms_by_location[path] = pom
+        self._poms_by_coordinate[pom.coordinate] = pom
 
     def find_pom_for_srcroot(self, srcroot):
         srcroot = os.path.abspath(srcroot)
-        self.resolveall()
-        for pom in self.resolved:
+        for pom in self._poms_by_coordinate.itervalues():
             for srcdir in pom.srcdirs:
                 if srcroot.startswith(srcdir):
-                    return pom
+                    # Ensure that it's resolved
+                    return self[pom.coordinate]
         return None
 
     def __getitem__(self, key):
-        pom = self.poms_by_coordinate.get(key)
+        pom = self._poms_by_coordinate.get(key)
         if not pom:
             if isinstance(key, str):
                 path = os.path.abspath(key)
-                pom = self.poms_by_location.get(path)
+                pom = self._poms_by_location.get(path)
             if not pom:
                 raise KeyError("No pom for %s" % (key,))
-        if pom not in self.resolved:
-            self.resolve(pom)
+        if pom not in self._resolved:
+            self._resolve(pom)
         return pom
+
+    def __len__(self):
+        return len(self._poms_by_coordinate)
