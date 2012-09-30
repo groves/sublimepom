@@ -133,7 +133,7 @@ class Pom(object):
             self.srcdirs = [self.dir + '/src/main/java']
             self.testsrcdirs = [self.dir + '/src/test/java']
 
-    def resolve(self, reso):
+    def _resolve(self, reso):
         # Reset missing for this resolution
         self.missing = set()
 
@@ -174,19 +174,17 @@ class Pom(object):
                 pass
         self.dependencies = ordereddict.OrderedDict()
         while totraverse:
-            self._resolve(totraverse.pop(0), reso, self.dependencies, totraverse)
-
-    def _resolve(self, pom, reso, dependencies, totraverse):
-        for dep in (d for d in pom.directdependencies if not d.coordinate in dependencies):
-            try:
-                deppom = reso[dep.coordinate]
-            except KeyError:
-                self.missing.add(dep.coordinate)
-                continue
-            dependencies[dep.coordinate] = dep
-            totraverse.append(deppom)
-            # TODO - exclusions, optional
-            # TODO - track scope, allowing overrides for less-restrictive scopes
+            pom = totraverse.pop(0)
+            for dep in (d for d in pom.directdependencies if not d.coordinate in self.dependencies):
+                try:
+                    deppom = reso[dep.coordinate]
+                except KeyError:
+                    self.missing.add(dep.coordinate)
+                    continue
+                self.dependencies[dep.coordinate] = dep
+                totraverse.append(deppom)
+                # TODO - exclusions, optional
+                # TODO - track scope, allowing overrides for less-restrictive scopes
 
 
 def smellslikepom(fn):
@@ -226,7 +224,7 @@ class Resolver(object):
                 self.resolved.discard(pom)
 
     def resolve(self, pom):
-        pom.resolve(self)
+        pom._resolve(self)
         self.resolved.add(pom)
 
     def resolveall(self):
