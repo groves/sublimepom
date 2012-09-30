@@ -56,12 +56,12 @@ def requiretext(parent, childname):
         return text
     raise MalformedPomException("%s.%s must contain text" % (parent.tag, childname))
 
-Parent = collections.namedtuple("Parent", ["groupId", "artifactId", "version", "relativePath"])
+ArtifactCoordinate = collections.namedtuple("AritifactCoordinate", ["groupId", "artifactId", "packaging"])
 
-Parent.tocoord = lambda x: Coordinate(x.groupId, x.artifactId, x.version, "pom")
+VersionedCoordinate = collections.namedtuple("VersionedCoordinate", ArtifactCoordinate._fields + ('version',))
 
-Coordinate = collections.namedtuple("Coordinate", ["groupId", "artifactId", "version", "packaging"])
-
+ParentCoordinate = collections.namedtuple("ParentCoordinate", VersionedCoordinate._fields + ("relativePath",))
+ParentCoordinate.versioned = property(lambda x: VersionedCoordinate(x.groupId, x.artifactId, x.packaging, x.version))
 
 class Dependency(object):
     def __init__(self, root):
@@ -71,15 +71,15 @@ class Dependency(object):
         self._packaging = gettext(root, "type", "jar")
         self._scope = gettext(root, "scope", "compile")
         self._optional = gettext(root, "optional", "false")
-        self.coordinate = Coordinate(self._groupId, self._artifactId, self._version, self._packaging)
 
         # Exclusions
 
     def resolve(self, interpolate):
-        self.coordinate = Coordinate(*[interpolate(e) for e in (self._groupId, self._artifactId, self._version, self._packaging)])
+        self.versioned = VersionedCoordinate(*[interpolate(e) for e in (self._groupId, self._artifactId, self._packaging, self._version)])
+        self.artifact = ArtifactCoordinate(self.versioned.groupId, self.versioned.artifactId, self.versioned.packaging)
 
     def __repr__(self):
-        return "Dependency%s" % (self.coordinate,)
+        return "Dependency%s" % (self.versioned,)
 
 UNSUPPORTED_PROPERTY_PREFIXES = set(["env", "java", "os", "file", "path", "line", "user"])
 
@@ -96,7 +96,7 @@ class Pom(object):
             parentArtifactId = requiretext(parent, "artifactId")
             parentVersion = requiretext(parent, "version")
             parentRelativePath = gettext(parent, "relativePath", "../pom.xml")
-            self._parent = Parent(parentGroupId, parentArtifactId, parentVersion, parentRelativePath)
+            self._parent = ParentCoordinate(parentGroupId, parentArtifactId, 'pom', parentVersion, parentRelativePath)
             self._version = gettext(root, "version", self._parent.version)
             self._groupId = gettext(root, "groupId", self._parent.groupId)
         else:
@@ -115,7 +115,7 @@ class Pom(object):
         # Maven supports expressions in groupId, artifactId, version, and packaging but warns against it.
         # We're just not going to support it until we find a reasonable use case for that.
         # TODO - add an error if any of these contain expressions
-        self.coordinate = Coordinate(self._groupId, self._artifactId, self._version, self._packaging)
+        self.coordinate = VersionedCoordinate(self._groupId, self._artifactId, self._packaging, self._version)
 
         # To parse:
 
@@ -167,21 +167,21 @@ class Pom(object):
             self.directdependencies = list(self._dependencies)
             # TODO Use relativePath here?
             try:
-                parent = reso[self._parent.tocoord()]
+                parent = reso[self._parent.versioned]
                 self.directdependencies.extend(parent.directdependencies)
             except KeyError:
-                self.missing.add(self._parent.tocoord())
+                self.missing.add(self._parent.versioned)
                 pass
         self.dependencies = ordereddict.OrderedDict()
         while totraverse:
             pom = totraverse.pop(0)
-            for dep in (d for d in pom.directdependencies if not d.coordinate in self.dependencies):
+            for dep in (d for d in pom.directdependencies if not d.artifact in self.dependencies):
                 try:
-                    deppom = reso[dep.coordinate]
+                    deppom = reso[dep.versioned]
                 except KeyError:
-                    self.missing.add(dep.coordinate)
+                    self.missing.add(dep.versioned)
                     continue
-                self.dependencies[dep.coordinate] = dep
+                self.dependencies[dep.artifact] = dep
                 totraverse.append(deppom)
                 # TODO - exclusions, optional
                 # TODO - track scope, allowing overrides for less-restrictive scopes
@@ -226,9 +226,9 @@ class Resolver(object):
             if pom._parent is None:
                 return None
             try:
-                pom = self[pom._parent.tocoord()]
+                pom = self[pom._parent.versioned]
             except KeyError:
-                pom.missing.add(pom._parent.tocoord())
+                pom.missing.add(pom._parent.versioned)
                 return None
         return None
 
