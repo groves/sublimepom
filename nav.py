@@ -55,7 +55,7 @@ class Lookup(object):
             newpom.testclasses = [classloc for root in newpom.testsrcdirs for classloc in get_classes_in_root(root)]
         with self.modlock:
             for newpom in newpoms:
-                self.resolver.addpom(newpom.path, newpom)
+                self.resolver.addpom(newpom)
             self.resolver.resolve()
             # TODO log missing from poms
 

@@ -211,11 +211,12 @@ class Resolver(object):
         self._resolved = set()
 
     def _resolve(self, pom):
-        pom._resolve(self)
-        self._resolved.add(pom)
+        if not pom in self._resolved:
+            pom._resolve(self)
+            self._resolved.add(pom)
 
     def resolve(self):
-        for pom in (pom for pom in self._poms.itervalues() if pom not in self._resolved):
+        for pom in self._poms.itervalues():
             self._resolve(pom)
 
     def _lookup_property(self, pom, key):
@@ -231,12 +232,9 @@ class Resolver(object):
                 return None
         return None
 
-    def addfile(self, path):
-        path = os.path.abspath(path)
-        self.addpom(path, parse(path))
-
-    def addpom(self, path, pom):
+    def addpom(self, pom):
         self._poms[pom.coordinate] = pom
+        self._resolved.clear()
 
     def find_pom_for_srcroot(self, srcroot):
         srcroot = os.path.abspath(srcroot)
