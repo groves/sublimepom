@@ -4,7 +4,7 @@ from nose.tools import eq_
 
 def createreso():
     reso = maven.Resolver()
-    for fn in maven.findpoms("test/goodpoms"):
+    for fn in maven.findpoms("test/goodpoms/basic"):
         reso.addpom(maven.parse(fn))
     return reso
 
@@ -39,7 +39,7 @@ def test_updatedep():
     initialdepcount = len(reso)
     eq_(0, len(resolved.dependencies))
 
-    reso.addpom(maven.parse('test/setfields_with_dep.xml'))
+    reso.addpom(maven.parse('test/goodpoms/setfields_with_dep.xml'))
     resolved = reso[('org.codehaus.mojo', 'setfields', '1.0', 'swc')]
     eq_(maven.Coordinate("org.codehaus.mojo", "simplest", "1.0", "jar"),
         resolved.dependencies.keys()[0])

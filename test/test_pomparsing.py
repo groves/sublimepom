@@ -14,11 +14,11 @@ def checkbadpom(path):
 
 
 def testsimplepom():
-    checkgoodpom('test/goodpoms/simplest.xml')
+    checkgoodpom('test/goodpoms/basic/simplest.xml')
 
 
 def testchildpom():
-    p = checkgoodpom('test/goodpoms/child.xml', artifact="child")
+    p = checkgoodpom('test/goodpoms/basic/child.xml', artifact="child")
     eq_(len(p._dependencies), 1)
 
     setfields = p._dependencies[0]
@@ -31,7 +31,7 @@ def testchildpom():
 
 
 def testsetfields():
-    checkgoodpom('test/goodpoms/setfields.xml', artifact="setfields", packaging="swc")
+    checkgoodpom('test/goodpoms/basic/setfields.xml', artifact="setfields", packaging="swc")
 
 
 def checkgoodpom(path, group="org.codehaus.mojo", artifact="simplest", version="1.0", packaging="jar"):
