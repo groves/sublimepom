@@ -207,28 +207,15 @@ def findpoms(path, followlinks=True, ignoreddirs=DEFAULT_DIR_IGNORES):
 
 class Resolver(object):
     def __init__(self):
-        self._poms_by_coordinate = {}
-        self._poms_by_location = {}
+        self._poms = {}
         self._resolved = set()
-
-    def adddir(self, path, followlinks=True, ignoreddirs=DEFAULT_DIR_IGNORES):
-        for fn in findpoms(path, followlinks, ignoreddirs):
-            self.addfile(fn)
-
-    def removedir(self, path):
-        path = os.path.abspath(path)
-        for pompath, pom in self._poms_by_location.items():
-            if pompath.startswith(path):
-                del self._poms_by_location[pompath]
-                del self._poms_by_coordinate[pom.coordinate]
-                self._resolved.discard(pom)
 
     def _resolve(self, pom):
         pom._resolve(self)
         self._resolved.add(pom)
 
     def resolve(self):
-        for pom in (pom for pom in self._poms_by_location.itervalues() if pom not in self._resolved):
+        for pom in (pom for pom in self._poms.itervalues() if pom not in self._resolved):
             self._resolve(pom)
 
     def _lookup_property(self, pom, key):
@@ -249,12 +236,11 @@ class Resolver(object):
         self.addpom(path, parse(path))
 
     def addpom(self, path, pom):
-        self._poms_by_location[path] = pom
-        self._poms_by_coordinate[pom.coordinate] = pom
+        self._poms[pom.coordinate] = pom
 
     def find_pom_for_srcroot(self, srcroot):
         srcroot = os.path.abspath(srcroot)
-        for pom in self._poms_by_coordinate.itervalues():
+        for pom in self._poms.itervalues():
             for srcdir in pom.srcdirs:
                 if srcroot.startswith(srcdir):
                     # Ensure that it's resolved
@@ -262,16 +248,10 @@ class Resolver(object):
         return None
 
     def __getitem__(self, key):
-        pom = self._poms_by_coordinate.get(key)
-        if not pom:
-            if isinstance(key, str):
-                path = os.path.abspath(key)
-                pom = self._poms_by_location.get(path)
-            if not pom:
-                raise KeyError("No pom for %s" % (key,))
+        pom = self._poms[key]
         if pom not in self._resolved:
             self._resolve(pom)
         return pom
 
     def __len__(self):
-        return len(self._poms_by_coordinate)
+        return len(self._poms)
