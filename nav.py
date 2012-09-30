@@ -14,7 +14,7 @@ ClassLoc = collections.namedtuple("ClassLoc", ["classname", "path"])
 
 class Lookup(object):
     def __init__(self):
-        self.repo = maven.Repository()
+        self.resolver = maven.Resolver()
         self.modlock = threading.RLock()
         self.actions = Queue.Queue()
         self.actor = threading.Thread(target=self._processactions, name="LookupActor")
@@ -31,9 +31,9 @@ class Lookup(object):
 
     def getclassesforpath(self, path):
         with self.modlock:
-            pom = self.repo.find_pom_for_srcroot(path)
+            pom = self.resolver.find_pom_for_srcroot(path)
             print "Got", pom.coordinate, "for", path, "with", pom.dependencies.keys()
-            return (classloc for coord in [pom.coordinate] + pom.dependencies.keys() for classloc in self.repo[coord].srcclasses)
+            return (classloc for coord in [pom.coordinate] + pom.dependencies.keys() for classloc in self.resolver[coord].srcclasses)
 
     def _processactions(self):
         while True:
@@ -55,8 +55,9 @@ class Lookup(object):
             newpom.testclasses = [classloc for root in newpom.testsrcdirs for classloc in get_classes_in_root(root)]
         with self.modlock:
             for newpom in newpoms:
-                self.repo.addpom(newpom.path, newpom)
-            self.repo.resolveall()
+                self.resolver.addpom(newpom.path, newpom)
+            self.resolver.resolveall()
+            # TODO log missing from poms
 
 
 def get_classes_in_root(root):
@@ -88,7 +89,7 @@ def get_classes(pom, test=False):
                     continue
                 yield name[:-5]
 
-def get_accessible_classes(repo, path, contents=None):
+def get_accessible_classes(resolver, path, contents=None):
     path = os.path.abspath(path)
     dirname, basename = os.path.split(path)
     # Find pom from location
@@ -98,9 +99,9 @@ def get_accessible_classes(repo, path, contents=None):
         if packagematch:
             package = packagematch.group(1)
             srcroot = dirname[:len(package)]
-    pom = repo.find_pom_for_srcroot(srcroot)
+    pom = resolver.find_pom_for_srcroot(srcroot)
     if pom is None:
         # If no poms, return project classes and JDK or Android
         return []
     else:
-        return [klass for coord in [pom.coordinate] + pom.dependencies.keys() for klass in get_classes(repo[coord])]
+        return [klass for coord in [pom.coordinate] + pom.dependencies.keys() for klass in get_classes(resolver[coord])]

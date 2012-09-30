@@ -2,15 +2,15 @@ import maven
 from nose.tools import eq_, ok_
 
 
-def createrepo():
-    repo = maven.Repository()
-    repo.adddir("test/goodpoms")
-    return repo
+def createreso():
+    reso = maven.Resolver()
+    reso.adddir("test/goodpoms")
+    return reso
 
 
 def test_transitive():
-    repo = createrepo()
-    resolved = repo["test/goodpoms/transitivesimplestuser.xml"]
+    reso = createreso()
+    resolved = reso["test/goodpoms/transitivesimplestuser.xml"]
     eq_("transitivesimplestuser", resolved._artifactId)
     eq_(2, len(resolved.dependencies))
 
@@ -21,8 +21,8 @@ def test_transitive():
 
 
 def test_parentdependenciesincluded():
-    repo = createrepo()
-    resolved = repo["test/goodpoms/child.xml"]
+    reso = createreso()
+    resolved = reso["test/goodpoms/child.xml"]
     eq_("child", resolved._artifactId)
     eq_(2, len(resolved.dependencies))
 
@@ -33,7 +33,7 @@ def test_parentdependenciesincluded():
 
 
 def test_removedir():
-    repo = createrepo()
-    ok_(len(repo.poms_by_location) > 0)
-    repo.removedir('test/goodpoms')
-    eq_({}, repo.poms_by_location)
+    reso = createreso()
+    ok_(len(reso.poms_by_location) > 0)
+    reso.removedir('test/goodpoms')
+    eq_({}, reso.poms_by_location)

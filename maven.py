@@ -133,7 +133,7 @@ class Pom(object):
             self.srcdirs = [self.dir + '/src/main/java']
             self.testsrcdirs = [self.dir + '/src/test/java']
 
-    def resolve(self, repo):
+    def resolve(self, reso):
         # Reset missing for this resolution
         self.missing = set()
 
@@ -151,7 +151,7 @@ class Pom(object):
                         print "Don't know how to interpolate %s" % expression
                         return expression
                 else:
-                    result = repo.lookup_property(self, name)
+                    result = reso.lookup_property(self, name)
                     if result is None:
                         break
                     expression = result
@@ -167,19 +167,19 @@ class Pom(object):
             self.directdependencies = list(self._dependencies)
             # TODO Use relativePath here?
             try:
-                parent = repo[self._parent.tocoord()]
+                parent = reso[self._parent.tocoord()]
                 self.directdependencies.extend(parent.directdependencies)
             except KeyError:
                 self.missing.add(self._parent.tocoord())
                 pass
         self.dependencies = ordereddict.OrderedDict()
         while totraverse:
-            self._resolve(totraverse.pop(0), repo, self.dependencies, totraverse)
+            self._resolve(totraverse.pop(0), reso, self.dependencies, totraverse)
 
-    def _resolve(self, pom, repo, dependencies, totraverse):
+    def _resolve(self, pom, reso, dependencies, totraverse):
         for dep in (d for d in pom.directdependencies if not d.coordinate in dependencies):
             try:
-                deppom = repo[dep.coordinate]
+                deppom = reso[dep.coordinate]
             except KeyError:
                 self.missing.add(dep.coordinate)
                 continue
@@ -207,7 +207,7 @@ def findpoms(path, followlinks=True, ignoreddirs=DEFAULT_DIR_IGNORES):
         dns[:] = (d for d in dns if d not in ignoreddirs)
 
 
-class Repository(object):
+class Resolver(object):
     def __init__(self):
         self.poms_by_coordinate = {}
         self.poms_by_location = {}
