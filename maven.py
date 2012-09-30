@@ -134,6 +134,9 @@ class Pom(object):
             self.testsrcdirs = [self.dir + '/src/test/java']
 
     def resolve(self, repo):
+        # Reset missing for this resolution
+        self.missing = set()
+
         def interpolate(expression):
             while expression.startswith('${') and expression.endswith('}'):
                 name = expression[2:-1]
@@ -148,7 +151,7 @@ class Pom(object):
                         print "Don't know how to interpolate %s" % expression
                         return expression
                 else:
-                    result = repo.lookupProperty(self, name)
+                    result = repo.lookup_property(self, name)
                     if result is None:
                         break
                     expression = result
@@ -167,7 +170,7 @@ class Pom(object):
                 parent = repo[self._parent.tocoord()]
                 self.directdependencies.extend(parent.directdependencies)
             except KeyError:
-                # TODO fetch?
+                self.missing.add(self._parent.tocoord())
                 pass
         self.dependencies = ordereddict.OrderedDict()
         while totraverse:
@@ -178,7 +181,7 @@ class Pom(object):
             try:
                 deppom = repo[dep.coordinate]
             except KeyError:
-                # TODO fetch?
+                self.missing.add(dep.coordinate)
                 continue
             dependencies[dep.coordinate] = dep
             totraverse.append(deppom)
@@ -230,13 +233,19 @@ class Repository(object):
         for pom in (pom for pom in self.poms_by_location.itervalues() if pom not in self.resolved):
             self.resolve(pom)
 
-    def lookupProperty(self, pom, key):
+    def lookup_property(self, pom, key):
         while pom:
             if key in pom._properties:
                 return pom._properties[key]
-            pom = self.poms_by_coordinate.get(pom._parent.tocoord())
-            if pom and pom not in self.resolved:
-                self.resolve(pom)
+            if pom._parent is None:
+                return None
+            parent = self.poms_by_coordinate.get(pom._parent.tocoord())
+            if parent is None:
+                pom.missing.add(pom._parent.tocoord)
+                return None
+            if parent not in self.resolved:
+                self.resolve(parent)
+            pom = parent
         return None
 
     def addfile(self, path):
