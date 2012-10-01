@@ -59,6 +59,7 @@ def requiretext(parent, childname):
 ArtifactCoordinate = collections.namedtuple("AritifactCoordinate", ["groupId", "artifactId", "packaging"])
 
 VersionedCoordinate = collections.namedtuple("VersionedCoordinate", ArtifactCoordinate._fields + ('version',))
+VersionedCoordinate.path = property(lambda x: '%s/%s/%s/%s-%s' % (x.groupId.replace('.', '/'), x.artifactId, x.version, x.artifactId, x.version))
 
 ParentCoordinate = collections.namedtuple("ParentCoordinate", VersionedCoordinate._fields + ("relativePath",))
 ParentCoordinate.versioned = property(lambda x: VersionedCoordinate(x.groupId, x.artifactId, x.packaging, x.version))
@@ -209,6 +210,7 @@ class Resolver(object):
     def __init__(self):
         self._poms = {}
         self._resolved = set()
+        self._localrepos = []
 
     def _resolve(self, pom):
         if not pom in self._resolved:
@@ -216,8 +218,25 @@ class Resolver(object):
             self._resolved.add(pom)
 
     def resolve(self):
-        for pom in self._poms.itervalues():
-            self._resolve(pom)
+        while len(self._resolved) != len(self._poms):  # Keep going till all poms are resolved
+            for pom in self._poms.itervalues():
+                self._resolve(pom)
+            found = False
+            # If there are any missing, check once for each in each local repo
+            for missing in set((missing for pom in self._poms.itervalues() for missing in pom.missing)):
+                for repo in self._localrepos:
+                    repopath = '%s/%s.pom' % (repo, missing.path)
+                    if not os.path.exists(repopath):
+                        continue
+                    try:
+                        parsed = parse(repopath)
+                    except:
+                        continue
+                    self.addpom(parsed)
+                    found = True
+                    break
+            if not found:
+                break
 
     def _lookup_property(self, pom, key):
         while pom:
@@ -231,6 +250,11 @@ class Resolver(object):
                 pom.missing.add(pom._parent.versioned)
                 return None
         return None
+
+    def addlocalrepo(self, path):
+        path = os.path.abspath(path)
+        if not path in self._localrepos:
+            self._localrepos.append(path)
 
     def addpom(self, pom):
         self._poms[pom.coordinate] = pom

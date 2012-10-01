@@ -45,3 +45,14 @@ def test_version_override():
         ("org.codehaus.mojo", "simplest11user", "jar", "1.0"),
         ("org.codehaus.mojo", "simplest", "jar", "1.0")],
         [dep.versioned for dep in resolved.dependencies.values()])
+
+def test_localrepo():
+    reso = maven.Resolver()
+    reso.addlocalrepo('test/repo')
+    reso.addpom(maven.parse('test/goodpoms/basic/simplestuser.xml'))
+    reso.resolve()
+    resolved = reso[('org.codehaus.mojo', 'simplestuser', 'jar', '1.0')]
+
+    eq_(set(), resolved.missing)
+    eq_([("org.codehaus.mojo", "simplest", "jar", "1.0")],
+        [dep.versioned for dep in resolved.dependencies.values()])
